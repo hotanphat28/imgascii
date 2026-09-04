@@ -102,11 +102,17 @@ function Scene() {
           if (!useStore.getState().perfMode) {
             useStore.getState().setPerfMode(true)
             useStore.getState().setTextCurveSegments(4)
-            // also drop density a bit
             const currentDensity = useStore.getState().density
             useStore.getState().setDensity(Math.max(0.01, currentDensity - 0.02))
           }
-        }} 
+        }}
+        onIncline={() => {
+          if (useStore.getState().perfMode) {
+            useStore.getState().setPerfMode(false)
+            // Optionally restore some quality here if desired, 
+            // but keeping it simple for now to avoid rapid oscillation.
+          }
+        }}
       />
     </>
   )
@@ -121,20 +127,7 @@ function App() {
     <div className="flex h-screen w-screen overflow-hidden font-mono bg-black">
       <Sidebar />
       <div className="flex-1 relative border-l-4 border-black" style={{ backgroundColor }}>
-        <Canvas 
-          gl={(arg) => {
-            const canvasElement = (arg && typeof arg.getContext === 'function') 
-              ? arg 
-              : (arg && arg.canvas && typeof arg.canvas.getContext === 'function' ? arg.canvas : null);
-            
-            let context = null;
-            if (canvasElement) {
-              context = canvasElement.getContext('webgl', { antialias: false, alpha: false, failIfMajorPerformanceCaveat: false }) || 
-                        canvasElement.getContext('experimental-webgl', { antialias: false, alpha: false, failIfMajorPerformanceCaveat: false });
-            }
-            return new THREE.WebGLRenderer({ ...(typeof arg === 'object' ? arg : {}), canvas: canvasElement, context, antialias: false, alpha: false });
-          }}
-        >
+        <Canvas gl={{ antialias: false, alpha: false }}>
           <Scene />
           <ExportSystem />
         </Canvas>

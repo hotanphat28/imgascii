@@ -1,16 +1,34 @@
-# React + Vite
+# ASCII-3D Generator // V2.0
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A React application built with Vite, React Three Fiber, and Zustand for generating dynamic 3D ASCII art text effects. It features a brutalist UI, custom `.ttf` font support, live camera/lighting controls, and client-side `.webm` and `.gif` exports.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **3D Text Rendering**: Dynamic text generation with customizable fonts, bevels, and animations (spin, wave, pulse).
+- **Post-processing ASCII Effect**: A high-performance WebGL shader pass that maps screen luminance to an ASCII character ramp.
+- **Media Capture**: Client-side recording using `@ffmpeg/wasm`.
+- **Dynamic Performance Scaling**: Automatically adjusts curve segments and density if the frame rate drops.
 
-## React Compiler
+## Recent Fixes & Improvements
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **WebGL 1 Compatibility Fix**: Addressed an issue in Three.js r163+ where explicitly requesting a WebGL 1 context would crash the `<Canvas>`. The renderer now correctly defaults to WebGL 2.
+- **Performance Monitor Recovery**: Added an `onIncline` handler to the `@react-three/drei` `<PerformanceMonitor>`, ensuring that the "LOWERED PERF" warning and degraded quality recover gracefully once the frame rate stabilizes.
+- **Default Resolution Density**: Fixed a bug where the default `density` setting was `0.15` (meaning each character consumed 15% of the screen width). It is now appropriately defaulted to `0.02` for clear readability.
+- **Console Noise Suppression**: Silenced harmless but annoying console errors, including the `THREE.Clock` deprecation warning (emitted internally by R3F) and common Chrome extension connection errors (`Could not establish connection. Receiving end does not exist.`).
 
-## Expanding the Oxlint configuration
+## Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+2. **Start the Development Server**
+   ```bash
+   npm run dev
+   ```
+
+3. **Build for Production**
+   ```bash
+   npm run build
+   ```

@@ -3,7 +3,7 @@ import { create } from 'zustand'
 export const useStore = create((set) => ({
   text: "CYBER",
   ramp: " .:-=+*#%@",
-  density: 0.15,
+  density: 0.02,
   foregroundColor: "#00ff00",
   backgroundColor: "#000000",
   animationType: "spin", // 'spin', 'wave', 'pulse', 'none'
