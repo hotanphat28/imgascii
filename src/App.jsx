@@ -1,124 +1,76 @@
-import React, { useRef, useState, useEffect } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Text3D, Center, PerspectiveCamera, PerformanceMonitor } from '@react-three/drei'
-import { EffectComposer } from '@react-three/postprocessing'
-import { AsciiEffect } from './AsciiEffect.jsx'
-import { useStore } from './useStore'
-import { ExportSystem } from './ExportSystem.jsx'
-import * as THREE from 'three'
+import React, { useEffect, useRef } from 'react'
 import { Sidebar } from './components/Sidebar.jsx'
+import { useStore } from './useStore'
+import { imageToAscii } from './AsciiConverter'
 
-const FONT_URL = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/helvetiker_regular.typeface.json'
-
-function AnimatedText() {
-  const { text, animationType, customFontData, textCurveSegments } = useStore()
-  const ref = useRef()
-
-  useFrame((state, delta) => {
-    if (!ref.current) return
-    if (animationType === 'spin') {
-      ref.current.rotation.y += delta * 0.5
-    } else if (animationType === 'wave') {
-      ref.current.rotation.y = Math.sin(state.clock.elapsedTime) * 0.5
-      ref.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.2
-    } else if (animationType === 'pulse') {
-      const scale = 1 + Math.sin(state.clock.elapsedTime * 3) * 0.1
-      ref.current.scale.set(scale, scale, scale)
-    } else {
-      ref.current.rotation.set(0, 0, 0)
-      ref.current.position.set(0, 0, 0)
-      ref.current.scale.set(1, 1, 1)
-    }
-  })
-
-  return (
-    <Center>
-      <group ref={ref}>
-        <Text3D
-          font={customFontData || FONT_URL}
-          size={2}
-          height={0.5}
-          curveSegments={textCurveSegments}
-          bevelEnabled
-          bevelThickness={0.05}
-          bevelSize={0.02}
-          bevelOffset={0}
-          bevelSegments={5}
-        >
-          {text || " "}
-          <meshStandardMaterial color="#ffffff" />
-        </Text3D>
-      </group>
-    </Center>
-  )
-}
-
-function TextureLoaderHelper({ url, onLoaded }) {
-  useEffect(() => {
-    if (!url) {
-      onLoaded(null)
-      return
-    }
-    const loader = new THREE.TextureLoader()
-    loader.load(
-      url, 
-      (tex) => onLoaded(tex),
-      undefined,
-      (err) => {
-        console.error("Error loading background image:", err)
-        onLoaded(null)
-      }
-    )
-  }, [url, onLoaded])
-  return null
-}
-
-function Scene() {
+function AsciiPreview() {
   const { 
-    ramp, density, foregroundColor, 
-    lightDirection, cameraFov, bgImage 
+    imageUrl, ramp, resolution, invertColors, contrast, 
+    foregroundColor,
+    asciiText, setAsciiText
   } = useStore()
   
-  const [bgTexture, setBgTexture] = useState(null)
+  const containerRef = useRef(null)
 
+  useEffect(() => {
+    if (!imageUrl) {
+      setAsciiText("")
+      return
+    }
+
+    let isMounted = true
+
+    imageToAscii(imageUrl, { ramp, resolution, invertColors, contrast })
+      .then(text => {
+        if (isMounted) setAsciiText(text)
+      })
+      .catch(err => {
+        console.error("Failed to convert image to ASCII", err)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [imageUrl, ramp, resolution, invertColors, contrast, setAsciiText])
+
+  if (!imageUrl) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center opacity-50 p-8 text-center" style={{ color: foregroundColor }}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter" className="mb-4"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        <h2 className="text-2xl font-black uppercase">No Image Uploaded</h2>
+        <p className="mt-2 font-bold max-w-md">Use the sidebar to select an image from your computer to begin the conversion process.</p>
+      </div>
+    )
+  }
+
+  // Calculate font size dynamically based on container width and resolution
+  // We use a CSS variable to pass it to the PRE element.
+
+  // We want the text to fit within the container. 
+  // We will let CSS handle scaling or just use a fixed font size and let it scroll.
+  // Given brutalist style, scrolling or tiny text is fine, but scaling to fit is better.
+  
   return (
-    <>
-      <PerspectiveCamera makeDefault fov={cameraFov} position={[0, 0, 10]} />
-      <TextureLoaderHelper url={bgImage} onLoaded={setBgTexture} />
-
-      <ambientLight intensity={0.5} />
-      <directionalLight position={lightDirection} intensity={1} />
-      <directionalLight position={[-10, -10, -10]} intensity={0.2} />
-      
-      <AnimatedText />
-      
-      <EffectComposer disableNormalPass multisampling={0}>
-        <AsciiEffect ramp={ramp} density={density} color={foregroundColor} bgTexture={bgTexture} />
-      </EffectComposer>
-      
-      <OrbitControls />
-      <PerformanceMonitor 
-        onDecline={() => {
-          if (!useStore.getState().perfMode) {
-            useStore.getState().setPerfMode(true)
-            useStore.getState().setTextCurveSegments(4)
-            const currentDensity = useStore.getState().density
-            useStore.getState().setDensity(Math.max(0.01, currentDensity - 0.02))
-          }
+    <div 
+      className="w-full h-full overflow-auto p-4 flex items-center justify-center relative" 
+      ref={containerRef}
+    >
+      {/* We use a flex container that can scroll. If the text is huge, it overflows. 
+          If it's small, it centers. */}
+      <pre 
+        className="font-mono leading-none m-0 p-4 border-4 border-transparent hover:border-white/20 transition-colors"
+        style={{ 
+          color: foregroundColor,
+          fontSize: '10px', // base size, can be made dynamic or controllable if needed
+          lineHeight: '1.2', // slightly taller for better readability in 2D
+          letterSpacing: '0em',
         }}
-        onIncline={() => {
-          if (useStore.getState().perfMode) {
-            useStore.getState().setPerfMode(false)
-            // Optionally restore some quality here if desired, 
-            // but keeping it simple for now to avoid rapid oscillation.
-          }
-        }}
-      />
-    </>
+      >
+        {asciiText}
+      </pre>
+    </div>
   )
 }
-
-// Sidebar component extracted to src/components/Sidebar.jsx
 
 function App() {
   const { backgroundColor } = useStore()
@@ -126,11 +78,8 @@ function App() {
   return (
     <div className="flex h-screen w-screen overflow-hidden font-mono bg-black">
       <Sidebar />
-      <div className="flex-1 relative border-l-4 border-black" style={{ backgroundColor }}>
-        <Canvas gl={{ antialias: false, alpha: false }}>
-          <Scene />
-          <ExportSystem />
-        </Canvas>
+      <div className="flex-1 relative border-l-4 border-black overflow-hidden" style={{ backgroundColor }}>
+        <AsciiPreview />
       </div>
     </div>
   )

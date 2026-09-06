@@ -1,5 +1,5 @@
 {
-  "name": "ascii-tool-prototype",
+  "name": "imgascii",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,12 +12,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ffmpeg/core": "^0.12.10",
-    "@ffmpeg/ffmpeg": "^0.12.15",
-    "@ffmpeg/util": "^0.12.2",
-    "@react-three/drei": "^10.7.8",
-    "@react-three/fiber": "^9.7.0",
-    "@react-three/postprocessing": "^3.0.5",
     "@tailwindcss/vite": "^4.3.3",
     "autoprefixer": "^10.5.4",
     "lucide-react": "^1.31.0",
@@ -25,7 +19,6 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3",
-    "three": "^0.185.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

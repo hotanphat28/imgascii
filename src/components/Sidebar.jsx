@@ -1,6 +1,5 @@
 import React from 'react'
 import { useStore } from '../useStore'
-import { TTFLoader } from 'three-stdlib'
 
 export function BrutalistInput({ label, type = "text", ...props }) {
   return (
@@ -15,119 +14,160 @@ export function BrutalistInput({ label, type = "text", ...props }) {
   )
 }
 
-export function BrutalistSelect({ label, options, ...props }) {
-  return (
-    <div className="flex flex-col gap-1 w-full">
-      <label className="text-xs font-bold uppercase tracking-widest text-black border-b-2 border-black pb-1 mb-1">{label}</label>
-      <select 
-        className="bg-white border-2 border-black p-2 font-mono text-sm text-black focus:outline-none focus:bg-yellow-100 transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50 appearance-none rounded-none cursor-pointer"
-        {...props}
-      >
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-    </div>
-  )
-}
-
 export function Sidebar() {
   const { 
-    text, setText, 
+    imageUrl, setImageUrl,
     ramp, setRamp, 
-    density, setDensity,
+    resolution, setResolution,
+    invertColors, setInvertColors,
+    contrast, setContrast,
     foregroundColor, setForegroundColor,
     backgroundColor, setBackgroundColor,
-    animationType, setAnimationType,
-    exportFormat, setExportFormat,
-    exportFps, setExportFps,
-    exportDuration, setExportDuration,
-    isExporting, setIsExporting,
-    exportPhase, exportProgress,
-    lightDirection, setLightDirection,
-    cameraFov, setCameraFov,
-    bgImage, setBgImage,
-    customFontName,
-    perfMode
+    asciiText
   } = useStore()
 
-  const handleExport = () => {
-    setIsExporting(true)
-  }
-
-  const handleFontUpload = (e) => {
+  const handleImageUpload = (e) => {
     const file = e.target.files[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      try {
-        const arrayBuffer = event.target.result
-        const loader = new TTFLoader()
-        const fontJson = loader.parse(arrayBuffer)
-        useStore.getState().setCustomFont(fontJson, file.name)
-      } catch (err) {
-        console.error("Failed to parse font", err)
-        alert("Failed to parse font file. Ensure it is a valid .ttf")
-      }
-    }
-    reader.readAsArrayBuffer(file)
+    const url = URL.createObjectURL(file)
+    setImageUrl(url)
+  }
+
+  const handleExportTxt = () => {
+    if (!asciiText) return
+    const blob = new Blob([asciiText], { type: "text/plain" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "imgascii.txt"
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportPng = () => {
+    if (!asciiText) return
+    
+    // Create a canvas to draw the text
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    
+    // We need to measure the text to set canvas size
+    const lines = asciiText.split('\n')
+    // Remove the last empty line if it exists
+    if (lines[lines.length - 1] === "") lines.pop()
+
+    // Setup font
+    const fontSize = 12
+    const font = `${fontSize}px monospace`
+    ctx.font = font
+    
+    // Measure width of one character (monospace)
+    const charWidth = ctx.measureText('M').width
+    const width = lines[0].length * charWidth
+    // Approximate line height for monospace
+    const lineHeight = fontSize * 1.2
+    const height = lines.length * lineHeight
+
+    // Add some padding
+    const padding = 20
+    canvas.width = width + padding * 2
+    canvas.height = height + padding * 2
+
+    // Fill background
+    ctx.fillStyle = backgroundColor
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    // Draw text
+    ctx.font = font
+    ctx.textBaseline = "top"
+    ctx.fillStyle = foregroundColor
+    
+    lines.forEach((line, i) => {
+      ctx.fillText(line, padding, padding + i * lineHeight)
+    })
+
+    const url = canvas.toDataURL("image/png")
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "imgascii.png"
+    a.click()
   }
 
   return (
     <div className="w-96 bg-[#f4f4f0] border-r-4 border-black p-6 flex flex-col gap-8 overflow-y-auto z-10 text-black font-mono shadow-[8px_0_0_0_rgba(0,0,0,1)]">
       <div className="bg-black text-white p-4 -mx-6 -mt-6 mb-2 border-b-4 border-black">
-        <h1 className="text-3xl font-bold tracking-tighter uppercase">ASCII-3D</h1>
-        <p className="text-xs text-green-400 font-bold tracking-widest">GENERATOR // V2.0</p>
+        <h1 className="text-4xl font-black tracking-tighter uppercase">imgascii</h1>
+        <p className="text-xs text-green-400 font-bold tracking-widest mt-1">IMAGE TO ASCII // V1.0</p>
       </div>
       
-      {/* TYPOGRAPHY */}
+      {/* INPUT */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-black uppercase bg-yellow-300 inline-block px-2 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] -rotate-1">Typography</h2>
-          {perfMode && <span className="text-[10px] bg-red-500 text-white px-1 border border-black font-bold animate-pulse" data-testid="perf-badge">LOWERED PERF</span>}
-        </div>
+        <h2 className="text-xl font-black uppercase bg-yellow-300 inline-block px-2 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] -rotate-1 mb-2">Input</h2>
         
-        <BrutalistInput 
-          label="Text Content" 
-          value={text} 
-          onChange={(e) => setText(e.target.value.substring(0, 50))} 
-        />
-
         <div className="flex flex-col gap-1 w-full">
-          <label className="text-xs font-bold uppercase tracking-widest text-black border-b-2 border-black pb-1 mb-1">Custom Font (.ttf)</label>
-          <div className="flex items-center gap-2">
-            <label className="cursor-pointer bg-black text-white px-3 py-2 font-mono text-xs uppercase tracking-widest hover:bg-slate-800 transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)] active:shadow-none active:translate-y-1 active:translate-x-1">
-              Upload TTF
-              <input type="file" accept=".ttf" onChange={handleFontUpload} className="hidden" data-testid="font-upload" />
-            </label>
-            <span className="text-xs truncate font-bold ml-2 max-w-[150px]" title={customFontName || 'None'}>
-              {customFontName || 'Default Font'}
-            </span>
-          </div>
+          <label className="text-xs font-bold uppercase tracking-widest text-black border-b-2 border-black pb-1 mb-1">Image Upload</label>
+          <label className="cursor-pointer bg-white border-4 border-black border-dashed p-6 text-center font-bold hover:bg-yellow-100 transition-colors flex flex-col items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            {imageUrl ? "CHANGE IMAGE" : "CHOOSE IMAGE"}
+            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+          </label>
         </div>
+      </div>
 
+      {/* CONTROLS */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-black uppercase bg-pink-300 inline-block px-2 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] rotate-1 mb-2">Controls</h2>
+        
         <BrutalistInput 
           label="ASCII Character Ramp" 
           value={ramp} 
           onChange={(e) => setRamp(e.target.value || " ")} 
         />
+        
         <div className="flex flex-col gap-1 w-full">
-          <label className="text-xs font-bold uppercase tracking-widest text-black border-b-2 border-black pb-1 mb-1">Resolution Density</label>
+          <div className="flex justify-between">
+            <label className="text-xs font-bold uppercase tracking-widest text-black">Resolution ({resolution}ch)</label>
+          </div>
           <input 
             type="range" 
-            min="0.01" 
-            max="0.1" 
-            step="0.005" 
-            value={density}
-            onChange={(e) => setDensity(parseFloat(e.target.value))}
-            className="w-full h-4 bg-white border-2 border-black appearance-none cursor-pointer"
+            min="20" 
+            max="300" 
+            step="1" 
+            value={resolution}
+            onChange={(e) => setResolution(parseInt(e.target.value))}
+            className="w-full h-4 bg-white border-2 border-black appearance-none cursor-pointer mt-1"
           />
         </div>
+
+        <div className="flex flex-col gap-1 w-full">
+          <div className="flex justify-between">
+            <label className="text-xs font-bold uppercase tracking-widest text-black">Contrast ({contrast.toFixed(1)}x)</label>
+          </div>
+          <input 
+            type="range" 
+            min="0.1" 
+            max="3" 
+            step="0.1" 
+            value={contrast}
+            onChange={(e) => setContrast(parseFloat(e.target.value))}
+            className="w-full h-4 bg-white border-2 border-black appearance-none cursor-pointer mt-1"
+          />
+        </div>
+
+        <label className="flex items-center gap-2 cursor-pointer font-bold uppercase text-sm mt-4 select-none">
+          <input 
+            type="checkbox" 
+            checked={invertColors} 
+            onChange={(e) => setInvertColors(e.target.checked)}
+            className="w-5 h-5 border-2 border-black appearance-none checked:bg-black checked:after:content-['X'] checked:after:text-white checked:after:flex checked:after:justify-center checked:after:text-xs"
+          />
+          Invert Colors
+        </label>
       </div>
 
       {/* AESTHETICS */}
       <div className="space-y-4">
-        <h2 className="text-xl font-black uppercase bg-pink-300 inline-block px-2 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] rotate-1 mb-2">Aesthetics</h2>
+        <h2 className="text-xl font-black uppercase bg-cyan-300 inline-block px-2 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] -rotate-1 mb-2">Aesthetics</h2>
         <div className="flex gap-4">
           <BrutalistInput 
             label="FG Color" 
@@ -142,99 +182,28 @@ export function Sidebar() {
             onChange={(e) => setBackgroundColor(e.target.value)} 
           />
         </div>
-        <BrutalistInput 
-          label="Custom Background Image URL" 
-          value={bgImage || ""} 
-          onChange={(e) => setBgImage(e.target.value)}
-          placeholder="https://..." 
-        />
-      </div>
-
-      {/* SCENE */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-black uppercase bg-cyan-300 inline-block px-2 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] -rotate-1 mb-2">Scene & Motion</h2>
-        <BrutalistSelect 
-          label="Animation Type" 
-          value={animationType}
-          onChange={(e) => setAnimationType(e.target.value)}
-          options={[
-            {value: "none", label: "STATIC"},
-            {value: "spin", label: "SPIN_Y"},
-            {value: "wave", label: "WAVE_SINE"},
-            {value: "pulse", label: "PULSE_SCALE"}
-          ]}
-        />
-        <div className="flex flex-col gap-1 w-full">
-          <label className="text-xs font-bold uppercase tracking-widest text-black border-b-2 border-black pb-1 mb-1">Camera FOV ({cameraFov})</label>
-          <input 
-            type="range" 
-            min="10" 
-            max="120" 
-            step="1" 
-            value={cameraFov}
-            onChange={(e) => setCameraFov(parseInt(e.target.value))}
-            className="w-full h-4 bg-white border-2 border-black appearance-none cursor-pointer"
-          />
-        </div>
-        <div className="flex flex-col gap-1 w-full">
-          <label className="text-xs font-bold uppercase tracking-widest text-black border-b-2 border-black pb-1 mb-1">Light X Direction ({lightDirection[0]})</label>
-          <input 
-            type="range" 
-            min="-20" 
-            max="20" 
-            step="1" 
-            value={lightDirection[0]}
-            onChange={(e) => setLightDirection([parseInt(e.target.value), lightDirection[1], lightDirection[2]])}
-            className="w-full h-4 bg-white border-2 border-black appearance-none cursor-pointer"
-          />
-        </div>
       </div>
 
       {/* EXPORT */}
       <div className="mt-auto pt-6">
         <div className="border-4 border-black p-4 bg-white shadow-[8px_8px_0_0_rgba(0,0,0,1)] space-y-4">
           <h2 className="text-lg font-black uppercase border-b-4 border-black pb-2">Export</h2>
-          <div className="flex gap-2">
-            <BrutalistSelect 
-              label="Format" 
-              value={exportFormat}
-              onChange={(e) => setExportFormat(e.target.value)}
-              disabled={isExporting}
-              options={[{value:"webm", label:".WEBM"}, {value:"gif", label:".GIF"}]}
-            />
-            <BrutalistSelect 
-              label="FPS" 
-              value={exportFps}
-              onChange={(e) => setExportFps(parseInt(e.target.value))}
-              disabled={isExporting}
-              options={[{value:"30", label:"30FPS"}, {value:"60", label:"60FPS"}]}
-            />
-            <BrutalistSelect 
-              label="Duration" 
-              value={exportDuration}
-              onChange={(e) => setExportDuration(parseInt(e.target.value))}
-              disabled={isExporting}
-              options={[{value:"3", label:"3s"}, {value:"5", label:"5s"}, {value:"10", label:"10s"}]}
-            />
+          <div className="flex flex-col gap-2">
+            <button 
+              onClick={handleExportPng}
+              disabled={!asciiText}
+              className="w-full bg-blue-400 hover:bg-blue-300 text-black font-black py-3 px-4 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all disabled:opacity-50"
+            >
+              DOWNLOAD .PNG
+            </button>
+            <button 
+              onClick={handleExportTxt}
+              disabled={!asciiText}
+              className="w-full bg-green-400 hover:bg-green-300 text-black font-black py-3 px-4 border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all disabled:opacity-50"
+            >
+              DOWNLOAD .TXT
+            </button>
           </div>
-
-          <button 
-            onClick={handleExport}
-            disabled={isExporting}
-            className="w-full bg-blue-500 hover:bg-blue-400 text-black font-black text-xl py-4 px-4 border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all disabled:opacity-50 flex flex-col items-center justify-center relative overflow-hidden"
-          >
-            {isExporting && (
-              <div 
-                className="absolute left-0 top-0 bottom-0 bg-yellow-400 transition-all duration-200 ease-out border-r-4 border-black"
-                style={{ width: `${exportProgress}%` }}
-              />
-            )}
-            <span className="relative z-10 flex items-center gap-2 mix-blend-difference text-white">
-              {isExporting 
-                ? `${exportPhase === 'capturing' ? 'CAPTURING...' : 'ENCODING...'} ${Math.round(exportProgress)}%` 
-                : `RENDER ${exportFormat.toUpperCase()}`}
-            </span>
-          </button>
         </div>
       </div>
     </div>

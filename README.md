@@ -1,20 +1,13 @@
-# ASCII-3D Generator // V2.0
+# imgascii
 
-A React application built with Vite, React Three Fiber, and Zustand for generating dynamic 3D ASCII art text effects. It features a brutalist UI, custom `.ttf` font support, live camera/lighting controls, and client-side `.webm` and `.gif` exports.
+imgascii - Turn any image into beautiful ASCII art instantly. Upload, convert, and download as image or text.
 
 ## Features
 
-- **3D Text Rendering**: Dynamic text generation with customizable fonts, bevels, and animations (spin, wave, pulse).
-- **Post-processing ASCII Effect**: A high-performance WebGL shader pass that maps screen luminance to an ASCII character ramp.
-- **Media Capture**: Client-side recording using `@ffmpeg/wasm`.
-- **Dynamic Performance Scaling**: Automatically adjusts curve segments and density if the frame rate drops.
-
-## Recent Fixes & Improvements
-
-- **WebGL 1 Compatibility Fix**: Addressed an issue in Three.js r163+ where explicitly requesting a WebGL 1 context would crash the `<Canvas>`. The renderer now correctly defaults to WebGL 2.
-- **Performance Monitor Recovery**: Added an `onIncline` handler to the `@react-three/drei` `<PerformanceMonitor>`, ensuring that the "LOWERED PERF" warning and degraded quality recover gracefully once the frame rate stabilizes.
-- **Default Resolution Density**: Fixed a bug where the default `density` setting was `0.15` (meaning each character consumed 15% of the screen width). It is now appropriately defaulted to `0.02` for clear readability.
-- **Console Noise Suppression**: Silenced harmless but annoying console errors, including the `THREE.Clock` deprecation warning (emitted internally by R3F) and common Chrome extension connection errors (`Could not establish connection. Receiving end does not exist.`).
+- **Instant Conversion**: Client-side rendering ensures fast conversion and complete privacy.
+- **Adjustable Controls**: Tweak resolution, contrast, and invert colors to get the perfect ASCII look.
+- **Export Options**: Download your art as a `.png` image or as raw `.txt` for use anywhere.
+- **Brutalist Design**: A bold, high-contrast, utility-first user interface.
 
 ## Getting Started
 
@@ -32,3 +25,9 @@ A React application built with Vite, React Three Fiber, and Zustand for generati
    ```bash
    npm run build
    ```
+
+## Documentation
+
+For more information about the project's architecture, design decisions, and release history, please refer to:
+- [CONTEXT.md](./CONTEXT.md) - Architectural decisions and technical overview.
+- [CHANGELOG.md](./CHANGELOG.md) - Version history and notable changes.
