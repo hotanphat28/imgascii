@@ -1,83 +1,67 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Sidebar } from '../components/Sidebar';
 import { useStore } from '../useStore';
 
-vi.mock('three-stdlib', () => ({
-  TTFLoader: class {
-    parse() {
-      return { mockFont: true };
-    }
-  }
-}));
+beforeEach(() => {
+  window.URL.createObjectURL = vi.fn(() => 'mock-url');
+  window.URL.revokeObjectURL = vi.fn();
+});
 
 describe('Sidebar', () => {
   beforeEach(() => {
     useStore.setState({
-      text: 'HELLO',
-      ramp: ' .:-=+*#%@',
-      density: 0.05,
-      foregroundColor: '#ffffff',
-      backgroundColor: '#000000',
-      animationType: 'none',
-      exportFormat: 'webm',
-      exportFps: 30,
-      exportDuration: 3,
-      isExporting: false,
-      exportPhase: 'idle',
-      exportProgress: 0,
-      lightDirection: [10, 10, 10],
-      cameraFov: 50,
-      bgImage: null,
-      customFontName: '',
-      perfMode: false
+      imageUrl: null,
+      ramp: " .:-=+*#%@",
+      resolution: 100,
+      invertColors: false,
+      contrast: 1,
+      foregroundColor: "#00ff00",
+      backgroundColor: "#000000",
+      asciiText: "",
     });
   });
 
-  it('renders correctly and displays initial state', () => {
+  it('renders all controls correctly', () => {
     render(<Sidebar />);
-    expect(screen.getByText('ASCII-3D')).toBeInTheDocument();
-    
-    // Verify inputs have correct default values
-    const textInput = screen.getByDisplayValue('HELLO');
-    expect(textInput).toBeInTheDocument();
-    
-    const rampInput = screen.getByDisplayValue(/.:-=+/);
-    expect(rampInput).toBeInTheDocument();
+    expect(screen.getByText('imgascii')).toBeInTheDocument();
+    expect(screen.getByLabelText(/ASCII Character Ramp/i)).toBeInTheDocument();
+    expect(screen.getByText(/Resolution/i)).toBeInTheDocument();
+    expect(screen.getByText(/Contrast/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Invert Colors/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /DOWNLOAD .PNG/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /DOWNLOAD .TXT/i })).toBeDisabled();
   });
 
-  it('updates text store when typing in Text Content input', () => {
+  it('handles image upload', () => {
     render(<Sidebar />);
-    const textInput = screen.getByDisplayValue('HELLO');
+    const file = new File(['dummy content'], 'test.png', { type: 'image/png' });
     
-    fireEvent.change(textInput, { target: { value: 'TEST' } });
-    expect(useStore.getState().text).toBe('TEST');
+    const input = document.querySelector('input[type="file"]');
+    fireEvent.change(input, { target: { files: [file] } });
+    
+    expect(window.URL.createObjectURL).toHaveBeenCalledWith(file);
+    expect(useStore.getState().imageUrl).toBe('mock-url');
   });
 
-  it('shows LOW PERF badge when perfMode is true', () => {
-    useStore.setState({ perfMode: true });
+  it('updates store on control changes', () => {
     render(<Sidebar />);
-    expect(screen.getByTestId('perf-badge')).toBeInTheDocument();
+    
+    const rampInput = screen.getByLabelText(/ASCII Character Ramp/i);
+    fireEvent.change(rampInput, { target: { value: '@#%*' } });
+    expect(useStore.getState().ramp).toBe('@#%*');
+    
+    const invertCheckbox = screen.getByLabelText(/Invert Colors/i);
+    fireEvent.click(invertCheckbox);
+    expect(useStore.getState().invertColors).toBe(true);
   });
 
-  it('handles font upload correctly', async () => {
+  it('enables export buttons when asciiText is present', () => {
+    useStore.setState({ asciiText: "test" });
     render(<Sidebar />);
-    const fileInput = screen.getByTestId('font-upload');
     
-    const file = new File(['mock content'], 'testfont.ttf', { type: 'font/ttf' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-    
-    // We can't easily wait for FileReader in this sync test environment without some async tricks, 
-    // but we can verify the input changed. Testing FileReader fully would require mocking it.
-    expect(fileInput.files[0].name).toBe('testfont.ttf');
-  });
-
-  it('triggers export when Export button is clicked', () => {
-    render(<Sidebar />);
-    const exportBtn = screen.getByRole('button', { name: /RENDER WEBM/i });
-    
-    fireEvent.click(exportBtn);
-    expect(useStore.getState().isExporting).toBe(true);
+    expect(screen.getByRole('button', { name: /DOWNLOAD .PNG/i })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /DOWNLOAD .TXT/i })).not.toBeDisabled();
   });
 });

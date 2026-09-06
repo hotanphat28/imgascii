@@ -2,10 +2,12 @@ import React from 'react'
 import { useStore } from '../useStore'
 
 export function BrutalistInput({ label, type = "text", ...props }) {
+  const id = React.useId()
   return (
     <div className="flex flex-col gap-1 w-full">
-      <label className="text-xs font-bold uppercase tracking-widest text-black border-b-2 border-black pb-1 mb-1">{label}</label>
+      <label htmlFor={id} className="text-xs font-bold uppercase tracking-widest text-black border-b-2 border-black pb-1 mb-1">{label}</label>
       <input 
+        id={id}
         type={type} 
         className="bg-white border-2 border-black p-2 font-mono text-sm text-black focus:outline-none focus:bg-yellow-100 transition-colors shadow-[4px_4px_0_0_rgba(0,0,0,1)] disabled:opacity-50"
         {...props}

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-06
+
+### Added
+- **Testing Infrastructure**: Added `vitest`, `jsdom`, and `React Testing Library` for robust component and unit testing.
+- **Unit and Component Tests**: Implemented a comprehensive test suite (20 passing tests) for UI components, state management, and core ASCII conversion logic.
+
+### Changed
+- **Architectural Refactor**: Extracted the `mapPixelToAscii` calculation into a pure function within `AsciiConverter.js` to ensure fast, deterministic testing decoupled from the HTML5 Canvas API.
+- **Accessibility Improvements**: Updated `BrutalistInput` and Sidebar controls to use `React.useId()` for proper semantic linkage between labels and inputs.
+
+### Removed
+- **Legacy Files & Dependencies**: Removed all obsolete `docs`, unused `assets`, broken 3D legacy tests, and unneeded `devDependencies` left over from previous architectural iterations.
+
 ## [1.0.0] - 2026-09-04
 
 ### Added

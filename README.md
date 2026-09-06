@@ -21,7 +21,14 @@ imgascii - Turn any image into beautiful ASCII art instantly. Upload, convert, a
    npm run dev
    ```
 
-3. **Build for Production**
+3. **Run Tests**
+   ```bash
+   npm test
+   # Or to run with coverage:
+   npm run test:coverage
+   ```
+
+4. **Build for Production**
    ```bash
    npm run build
    ```

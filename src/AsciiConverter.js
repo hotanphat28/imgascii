@@ -1,3 +1,22 @@
+export function mapPixelToAscii(r, g, b, a, rampArray, contrast, invertColors) {
+  if (a === 0) return " "
+
+  // Calculate luminance
+  let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+  // Apply contrast
+  luminance = (luminance - 0.5) * contrast + 0.5
+  luminance = Math.max(0, Math.min(1, luminance)) // Clamp to 0-1
+
+  if (invertColors) {
+    luminance = 1 - luminance
+  }
+
+  // Map to ramp
+  const rampIndex = Math.floor(luminance * (rampArray.length - 1))
+  return rampArray[rampIndex]
+}
+
 export function imageToAscii(imageUrl, options) {
   return new Promise((resolve, reject) => {
     const {
@@ -40,25 +59,7 @@ export function imageToAscii(imageUrl, options) {
           const b = data[offset + 2]
           const a = data[offset + 3]
 
-          if (a === 0) {
-            asciiStr += " "
-            continue
-          }
-
-          // Calculate luminance
-          let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-
-          // Apply contrast
-          luminance = (luminance - 0.5) * contrast + 0.5
-          luminance = Math.max(0, Math.min(1, luminance)) // Clamp to 0-1
-
-          if (invertColors) {
-            luminance = 1 - luminance
-          }
-
-          // Map to ramp
-          const rampIndex = Math.floor(luminance * (rampLength - 1))
-          asciiStr += rampArray[rampIndex]
+          asciiStr += mapPixelToAscii(r, g, b, a, rampArray, contrast, invertColors)
         }
         asciiStr += "\n"
       }
